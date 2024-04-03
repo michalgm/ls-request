@@ -7,8 +7,8 @@ import axios from 'axios';
 import { useState } from 'react';
 
 const formData = {
-  contact_name: 'foo',
-  phone_number: 'bar'
+  // contact_name: 'foo',
+  // phone_number: 'bar'
 }
 const schema = {
   type: 'object',
