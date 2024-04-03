@@ -1,9 +1,10 @@
-// import { useState } from 'react'
 import './App.scss'
 import Form from '@rjsf/mui';
 import validator from '@rjsf/validator-ajv8';
 import { startCase } from 'lodash-es';
-import { Alert, Stack, Typography, Paper } from '@mui/material';
+import { Alert, AlertTitle, Stack, Typography, Paper } from '@mui/material';
+import axios from 'axios';
+import { useState } from 'react';
 
 const formData = {
   contact_name: 'foo',
@@ -64,7 +65,7 @@ const custom_schema = {
     "ui:widget": "textarea"
   }
 }
-const onSubmit = ({ formData }) => console.log('Data submitted: ', formData);
+
 
 const uiSchema = Object.keys(schema.properties).reduce((acc, key) => {
   acc[key] = {
@@ -86,30 +87,64 @@ const uiSchema = Object.keys(schema.properties).reduce((acc, key) => {
 const logChange = ({ formData }) => console.log(formData);
 
 function App() {
+  const [status, setStatus] = useState(false)
+  const onSubmit = async ({ formData }) => {
+    console.log('Data submitted: ', formData)
+    return axios.post('/submit', formData)
+      .then(response => {
+        console.log('Success:', response.data);
+        // Handle the response data in here
+        setStatus('success')
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        // Handle errors in her
+        setStatus('error')
+
+      });
+  };
+
+
+  const response = status === 'success' ? <Alert severity="success" >
+    <AlertTitle>
+      Your request has been submitted
+    </AlertTitle>
+    Someone will contact you to discuss your legal support request
+  </Alert> : <Alert severity="error" >
+    <AlertTitle>
+      Something went wrong
+    </AlertTitle>
+    Please reload and try again
+  </Alert>
+
+  const form = <>
+    <Stack spacing={2}>
+      <Alert icon={false}>
+        If you are contacting us because you need legal support for an FBI visit, search warrant, or other law enforcement investigation, please call 415-285-1041
+      </Alert>
+      <Alert icon={false} severity='info'>
+        Submitting this form does not guarantee legal support, it simply constitutes a request
+      </Alert>
+
+    </Stack>
+    <Form
+      schema={schema}
+      validator={validator}
+      uiSchema={uiSchema}
+      // liveValidate
+      formData={formData}
+      onSubmit={onSubmit}
+      onChange={logChange}
+      focusOnFirstError
+    />
+  </>
   return (
     <div className='App'>
       <Paper sx={{ p: 4 }}>
         <Typography variant='h3' align='center' color='primary' gutterBottom>Legal Support Request Form</Typography>
-        <Stack spacing={2}>
-          <Alert icon={false}>
-            If you are contacting us because you need legal support for an FBI visit, search warrant, or other law enforcement investigation, please call 415-285-1041
-          </Alert>
-          <Alert icon={false} severity='info'>
-            Submitting this form does not guarantee legal support, it simply constitutes a request
-          </Alert>
-
-        </Stack>
-        <Form
-          schema={schema}
-          validator={validator}
-          uiSchema={uiSchema}
-          // liveValidate
-          formData={formData}
-          onSubmit={onSubmit}
-          onChange={logChange}
-          focusOnFirstError
-
-        />
+        {
+          status ? response : form
+        }
       </Paper>
     </div>
   );

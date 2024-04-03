@@ -16,6 +16,7 @@
     "@rjsf/core": "^5.18.1",
     "@rjsf/mui": "^5.18.1",
     "@rjsf/validator-ajv8": "^5.18.1",
+    "axios": "^1.6.8",
     "lodash-es": "^4.17.21",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
