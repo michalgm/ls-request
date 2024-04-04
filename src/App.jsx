@@ -7,10 +7,22 @@ import axios from 'axios';
 import { useState, useEffect } from 'react';
 import { useGoogleReCaptcha } from 'react-google-recaptcha-v3';
 
+const debug = new URLSearchParams(window.location.search).has('debug')
+// const debug = queryParameters.has("debug") || false)
+
 const formData = {
-  // contact_name: 'foo',
-  // phone_number: 'bar',
-  // disclaimer: true,
+  contact_name: 'Frodo Baggins',
+  phone_number: '(625) 251-2923',
+  email: 'frodo@shire.com',
+  organization: 'Fellowship Of The Ring',
+  event_name: 'Mordor lockdown',
+  public_link: 'none',
+  event_date: '2024-03-17',
+  start_time: '08:00:00',
+  end_time: '17:00:00',
+  support_requests: ['Legal hotline', 'Legal observers'],
+  notes: 'We need a wizard too',
+  disclaimer: true,
 }
 
 const infobox = function (props) {
@@ -74,17 +86,18 @@ const schema = {
 }
 
 const custom_schema = {
-  phone_number: {
+  "ui:order": Object.keys(schema.properties),
+  "phone_number": {
     "ui:enableMarkdownInDescription": true,
   },
-  support_requests: {
+  "support_requests": {
     "ui:widget": "CheckboxesWidget",
     'ui:classNames': 'requests'
   },
-  warning: {
+  "warning": {
     "ui:widget": 'infobox'
   },
-  notes: {
+  "notes": {
     "ui:widget": "textarea"
   }
 }
@@ -117,7 +130,6 @@ function App() {
   const [submitCount, setSubmitCount] = useState(0);
   const [values, setValues] = useState('');
 
-
   useEffect(() => {
     const getToken = async () => {
       try {
@@ -140,22 +152,6 @@ function App() {
     }
   }, [values, submitCount, executeRecaptcha])
 
-  // const onSubmit = async ({ formData }) => {
-  //   console.log('Data submitted: ', formData)
-  //   return axios.post('/submit', formData)
-  //     .then(response => {
-  //       console.log('Success:', response.data);
-  //       // Handle the response data in here
-  //       setStatus('success')
-  //     })
-  //     .catch(error => {
-  //       console.error('Error:', error);
-  //       // Handle errors in her
-  //       setStatus('error')
-
-  //     });
-  // };
-
   const onSubmit = async ({ formData }) => {
     setError(null);
     setStatus(null);
@@ -163,7 +159,6 @@ function App() {
     setValues(formData)
     setSubmitCount(submitCount + 1)
   }
-
 
   const response = status === 'success' ? <Alert severity="success" >
     <AlertTitle>
@@ -182,17 +177,12 @@ function App() {
       <Alert icon={false}>
         If you are contacting us because you need legal support for an FBI visit, search warrant, or other law enforcement investigation, please call 415-285-1041
       </Alert>
-      {/* <Alert icon={false} severity='info'>
-        Submitting this form does not guarantee legal support, it simply constitutes a request
-      </Alert> */}
-
     </Stack>
     <Form
       schema={schema}
       validator={validator}
       uiSchema={uiSchema}
-      // liveValidate
-      formData={formData}
+      formData={debug ? formData : {}}
       onSubmit={onSubmit}
       onChange={logChange}
       focusOnFirstError
@@ -223,33 +213,4 @@ function App() {
 }
 
 export default App
-
-
-/*
-*Contact person for legal support
-*SIgnal phone
-email
-Group or organization
-Demo name and/or topic
-Link to public announcement, if any
-Date of event
-Start time
-Expected end time
-Details - if secure, we can contact you on signal
-We request:
-_ Pre-action legal consult with an attorney
-_ Anti-repression/KYR workshop
-_ Legal hotline
-_ Legal Observers
-_ On call attorney and/or defense attorney in case of arrests
-_ Jail support info
-_ Post-arrest legal meeting
-_ other
-
-
-If you are contacting us because you need legal support for an FBI visit, search warrant, or other law enforcement investigation, please call 415-285-1041
-
-
-I am completing this confidential form for the purpose of obtaining legal advice and representation
-*/
 
