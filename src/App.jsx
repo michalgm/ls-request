@@ -8,9 +8,9 @@ import { useState, useEffect } from 'react';
 import { useGoogleReCaptcha } from 'react-google-recaptcha-v3';
 
 const formData = {
-  contact_name: 'foo',
-  phone_number: 'bar',
-  disclaimer: true,
+  // contact_name: 'foo',
+  // phone_number: 'bar',
+  // disclaimer: true,
 }
 
 const infobox = function (props) {
