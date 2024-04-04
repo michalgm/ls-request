@@ -120,8 +120,6 @@ const uiSchema = Object.keys(schema.properties).reduce((acc, key) => {
   },
 })
 
-const logChange = ({ formData }) => console.log(formData);
-
 function App() {
   const { executeRecaptcha } = useGoogleReCaptcha();
   const [status, setStatus] = useState(false)
@@ -184,7 +182,6 @@ function App() {
       uiSchema={uiSchema}
       formData={debug ? formData : {}}
       onSubmit={onSubmit}
-      onChange={logChange}
       focusOnFirstError
       widgets={widgets}
     />

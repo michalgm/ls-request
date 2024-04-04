@@ -21,14 +21,14 @@ const transporter = nodemailer.createTransport({
 })
 
 const formatEmail = data => {
-    let htmlTable = '<table style="width:400px;border-collapse:collapse;" border="0">';
+
+    let htmlTable = '<table style="width:100%;border-collapse:collapse;border: 1px solid #ccc;">';
 
     for (const [key, value] of Object.entries(data)) {
-        htmlTable += `<tr><td><b>${startCase(key)}</b></td><td>${value}</td></tr>`;
+        htmlTable += `\n<tr><td style="padding: 8px; border-bottom: 1px solid #ddd;"><b>${startCase(key)}</b></td><td style="padding: 8px; border-bottom: 1px solid #ddd; width:100%;">${value}</td></tr>`;
     }
 
     htmlTable += '</table>';
-    console.log(htmlTable)
     return htmlTable
 }
 
