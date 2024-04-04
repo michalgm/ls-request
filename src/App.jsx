@@ -2,22 +2,45 @@ import './App.scss'
 import Form from '@rjsf/mui';
 import validator from '@rjsf/validator-ajv8';
 import { startCase } from 'lodash-es';
-import { Alert, AlertTitle, Stack, Typography, Paper } from '@mui/material';
+import { Alert, AlertTitle, Stack, Typography, Paper, Backdrop, CircularProgress, Snackbar } from '@mui/material';
 import axios from 'axios';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useGoogleReCaptcha } from 'react-google-recaptcha-v3';
 
 const formData = {
-  // contact_name: 'foo',
-  // phone_number: 'bar'
+  contact_name: 'foo',
+  phone_number: 'bar',
+  disclaimer: true,
+}
+
+const infobox = function (props) {
+  return (
+    <Alert severity='info' icon={false}>
+      {props.label}
+    </Alert>
+  );
+};
+
+const widgets = {
+  infobox
 }
 const schema = {
   type: 'object',
   properties: {
+    disclaimer: {
+      type: 'boolean',
+      title: 'I am completing this confidential form for the purpose of obtaining legal advice and representation. I understand that my communications with legal support will be confidential.'
+    },
+    warning: {
+      type: 'boolean',
+      title: 'Submitting this form does not guarantee legal support, it simply constitutes a request'
+    },
     contact_name: { type: 'string' },
     phone_number: {
       type: 'string',
       description: " We recommend a cell number with [**Signal**](https://signal.org/download/) installed for secure voice communication"
     },
+    email: { type: 'string', format: 'email' },
     organization: { type: 'string', title: 'Group or Organization' },
     event_name: { type: 'string', title: 'Event Name / Topic' },
     public_link: { type: 'string' },
@@ -45,10 +68,7 @@ const schema = {
       type: 'string',
       title: 'Anything else you would like us to know?'
     },
-    disclaimer: {
-      type: 'boolean',
-      title: 'I am completing this confidential form for the purpose of obtaining legal advice and representation'
-    }
+
   },
   required: ['contact_name', 'phone_number', 'support_requests', 'disclaimer']
 }
@@ -60,6 +80,9 @@ const custom_schema = {
   support_requests: {
     "ui:widget": "CheckboxesWidget",
     'ui:classNames': 'requests'
+  },
+  warning: {
+    "ui:widget": 'infobox'
   },
   notes: {
     "ui:widget": "textarea"
@@ -87,22 +110,59 @@ const uiSchema = Object.keys(schema.properties).reduce((acc, key) => {
 const logChange = ({ formData }) => console.log(formData);
 
 function App() {
+  const { executeRecaptcha } = useGoogleReCaptcha();
   const [status, setStatus] = useState(false)
-  const onSubmit = async ({ formData }) => {
-    console.log('Data submitted: ', formData)
-    return axios.post('/submit', formData)
-      .then(response => {
-        console.log('Success:', response.data);
-        // Handle the response data in here
-        setStatus('success')
-      })
-      .catch(error => {
-        console.error('Error:', error);
-        // Handle errors in her
-        setStatus('error')
+  const [error, setError] = useState();
+  const [loading, setLoading] = useState(false);
+  const [submitCount, setSubmitCount] = useState(0);
+  const [values, setValues] = useState('');
 
-      });
-  };
+
+  useEffect(() => {
+    const getToken = async () => {
+      try {
+        setLoading(true)
+        const token = await executeRecaptcha("submit");
+        await axios.post('/submit', { data: values, token })
+        setStatus('success')
+      } catch (e) {
+        console.error(e)
+        if (e && e.response && e.response.data && e.response.data.error) {
+          setError(e.response.data.error)
+        } else {
+          setError(e && e.message ? e.message : e)
+        }
+      }
+      setLoading(false)
+    }
+    if (values) {
+      getToken()
+    }
+  }, [values, submitCount, executeRecaptcha])
+
+  // const onSubmit = async ({ formData }) => {
+  //   console.log('Data submitted: ', formData)
+  //   return axios.post('/submit', formData)
+  //     .then(response => {
+  //       console.log('Success:', response.data);
+  //       // Handle the response data in here
+  //       setStatus('success')
+  //     })
+  //     .catch(error => {
+  //       console.error('Error:', error);
+  //       // Handle errors in her
+  //       setStatus('error')
+
+  //     });
+  // };
+
+  const onSubmit = async ({ formData }) => {
+    setError(null);
+    setStatus(null);
+
+    setValues(formData)
+    setSubmitCount(submitCount + 1)
+  }
 
 
   const response = status === 'success' ? <Alert severity="success" >
@@ -122,9 +182,9 @@ function App() {
       <Alert icon={false}>
         If you are contacting us because you need legal support for an FBI visit, search warrant, or other law enforcement investigation, please call 415-285-1041
       </Alert>
-      <Alert icon={false} severity='info'>
+      {/* <Alert icon={false} severity='info'>
         Submitting this form does not guarantee legal support, it simply constitutes a request
-      </Alert>
+      </Alert> */}
 
     </Stack>
     <Form
@@ -136,17 +196,29 @@ function App() {
       onSubmit={onSubmit}
       onChange={logChange}
       focusOnFirstError
+      widgets={widgets}
     />
   </>
   return (
-    <div className='App'>
-      <Paper sx={{ p: 4 }}>
-        <Typography variant='h3' align='center' color='primary' gutterBottom>Legal Support Request Form</Typography>
-        {
-          status ? response : form
-        }
-      </Paper>
-    </div>
+    <>
+      <Backdrop style={{ zIndex: 1000 }} open={loading}>
+        <CircularProgress color="inherit" />
+      </Backdrop>
+      <Snackbar open={Boolean(error)} onClose={() => { setError(null) }} anchorOrigin={{ vertical: 'top', horizontal: 'center' }}>
+        <Alert severity="error" onClose={() => { setError(null) }}>
+          <AlertTitle>An error occured while submitting the form:</AlertTitle>
+          {error}
+        </Alert>
+      </Snackbar>
+      <div className='App'>
+        <Paper sx={{ p: 4 }}>
+          <Typography variant='h3' align='center' color='primary' gutterBottom>Legal Support Request Form</Typography>
+          {
+            status ? response : form
+          }
+        </Paper>
+      </div>
+    </>
   );
 }
 
